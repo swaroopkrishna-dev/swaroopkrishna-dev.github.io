@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swaroop Krishna — Game Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FAFAF9;
+    --surface: #F1F0EC;
+    --surface-2: #E9E7E1;
+    --ink: #14151A;
+    --ink-muted: #6B6F76;
+    --accent: #1F8A5F;
+    --accent-dim: rgba(31,138,95,0.10);
+    --border: #E1DFD8;
+    --mono: 'IBM Plex Mono', monospace;
+    --display: 'Sora', sans-serif;
+    --body: 'Inter', sans-serif;
+    --max: 1080px;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  a{ color:inherit; }
+
+  .wrap{
+    max-width:var(--max);
+    margin:0 auto;
+    padding:0 32px;
+  }
+
+  /* ---------- HUD overlay (signature element) ---------- */
+  #hud{
+    position:fixed;
+    top:18px;
+    right:24px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-muted);
+    letter-spacing:0.03em;
+    opacity:0.55;
+    z-index:200;
+    pointer-events:none;
+    text-align:right;
+    line-height:1.6;
+    mix-blend-mode:normal;
+  }
+  #hud span{ color:var(--accent); }
+  @media (max-width: 768px){ #hud{ display:none; } }
+
+  /* ---------- Nav ---------- */
+  nav{
+    position:sticky;
+    top:0;
+    z-index:100;
+    background:rgba(250,250,249,0.86);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .nav-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:64px;
+  }
+  .logo{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.02em;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .status-dot{
+    width:7px; height:7px;
+    border-radius:50%;
+    background:var(--accent);
+    display:inline-block;
+    box-shadow:0 0 0 3px var(--accent-dim);
+  }
+  .nav-links{
+    display:flex;
+    gap:28px;
+    font-size:14px;
+    font-weight:500;
+  }
+  .nav-links a{
+    text-decoration:none;
+    color:var(--ink-muted);
+    transition:color 0.2s ease;
+  }
+  .nav-links a:hover{ color:var(--ink); }
+  .nav-status{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-muted);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  @media (max-width:640px){
+    .nav-links{ display:none; }
+  }
+
+  /* ---------- reveal-on-scroll ---------- */
+  .reveal{
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  @media (prefers-reduced-motion: reduce){
+    .reveal{ opacity:1; transform:none; transition:none; }
+    *{ animation:none !important; }
+  }
+
+  /* ---------- Hero ---------- */
+  header.hero{
+    padding:140px 0 100px;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--accent);
+    letter-spacing:0.06em;
+    margin-bottom:22px;
+    opacity:0;
+    animation:fadeUp 0.7s ease forwards;
+    animation-delay:0.05s;
+  }
+  h1.name{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:clamp(2.6rem, 7vw, 5rem);
+    line-height:1.02;
+    margin:0 0 20px;
+    letter-spacing:-0.02em;
+    opacity:0;
+    animation:fadeUp 0.7s ease forwards;
+    animation-delay:0.15s;
+  }
+  .tagline{
+    font-size:clamp(1.05rem, 2vw, 1.3rem);
+    color:var(--ink-muted);
+    max-width:560px;
+    line-height:1.55;
+    margin:0 0 40px;
+    opacity:0;
+    animation:fadeUp 0.7s ease forwards;
+    animation-delay:0.25s;
+  }
+  .hero-cta{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    opacity:0;
+    animation:fadeUp 0.7s ease forwards;
+    animation-delay:0.35s;
+  }
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(14px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:13px 22px;
+    border-radius:8px;
+    font-size:14.5px;
+    font-weight:600;
+    text-decoration:none;
+    transition:transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+    border:1px solid transparent;
+  }
+  .btn:active{ transform:scale(0.97); }
+  .btn-primary{
+    background:var(--ink);
+    color:var(--bg);
+  }
+  .btn-primary:hover{ background:#2b2c33; }
+  .btn-ghost{
+    border-color:var(--border);
+    color:var(--ink);
+    background:transparent;
+  }
+  .btn-ghost:hover{ border-color:var(--ink-muted); }
+
+  /* ---------- Section heading pattern ---------- */
+  .section{ padding:90px 0; }
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    margin-bottom:48px;
+    flex-wrap:wrap;
+  }
+  .section-eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--accent);
+    letter-spacing:0.06em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .section-title{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:clamp(1.7rem, 3.6vw, 2.4rem);
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .section-sub{
+    color:var(--ink-muted);
+    font-size:14.5px;
+    max-width:320px;
+    line-height:1.6;
+    margin:0;
+  }
+
+  #projects{ border-top:1px solid var(--border); background:var(--surface); }
+
+  /* ---------- Project cards ---------- */
+  .grid-projects{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:26px;
+  }
+  @media (max-width:760px){ .grid-projects{ grid-template-columns:1fr; } }
+
+  .card{
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    transition:border-color 0.2s ease, transform 0.2s ease;
+  }
+  .card:hover{ border-color:var(--ink-muted); transform:translateY(-3px); }
+
+  .thumb{
+    height:170px;
+    position:relative;
+    background:
+      repeating-linear-gradient(135deg, var(--surface-2) 0px, var(--surface-2) 2px, transparent 2px, transparent 14px),
+      var(--surface);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .thumb span{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-muted);
+    background:var(--bg);
+    border:1px solid var(--border);
+    padding:5px 10px;
+    border-radius:20px;
+  }
+
+  .card-body{ padding:22px 24px 24px; }
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .card-title{
+    font-family:var(--display);
+    font-weight:600;
+    font-size:1.1rem;
+    margin:0;
+  }
+  .badge{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:0.03em;
+    padding:4px 9px;
+    border-radius:20px;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .badge.shipped{ background:var(--accent-dim); color:var(--accent); }
+  .badge.dev{ background:#EFE6D8; color:#8A5A1F; }
+  .badge.proto{ background:#E7E5F0; color:#4B3F91; }
+
+  .card-desc{
+    font-size:14px;
+    color:var(--ink-muted);
+    line-height:1.55;
+    margin:0 0 16px;
+  }
+  .tags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+  }
+  .tag{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-muted);
+    border:1px solid var(--border);
+    padding:4px 9px;
+    border-radius:6px;
+  }
+
+  /* ---------- About ---------- */
+  #about .wrap{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:56px;
+    align-items:start;
+  }
+  @media (max-width:720px){
+    #about .wrap{ grid-template-columns:1fr; }
+  }
+  .avatar{
+    width:100%;
+    aspect-ratio:1;
+    border-radius:16px;
+    background:
+      repeating-linear-gradient(135deg, var(--surface-2) 0px, var(--surface-2) 2px, transparent 2px, transparent 14px),
+      var(--surface);
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .avatar span{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-muted);
+  }
+  .bio p{
+    font-size:15.5px;
+    line-height:1.7;
+    color:var(--ink);
+    max-width:620px;
+  }
+  .bio p.muted{ color:var(--ink-muted); }
+
+  .loadout{ margin-top:34px; }
+  .loadout-group{ margin-bottom:20px; }
+  .loadout-label{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-muted);
+    letter-spacing:0.04em;
+    margin-bottom:10px;
+    display:block;
+  }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    font-size:13px;
+    font-weight:500;
+    padding:7px 13px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:8px;
+  }
+
+  /* ---------- Contact ---------- */
+  #contact{ border-top:1px solid var(--border); background:var(--surface); }
+  #contact .inner{
+    text-align:left;
+    max-width:560px;
+  }
+  #contact .btn-primary{ margin-top:26px; }
+  .socials{
+    display:flex;
+    gap:18px;
+    margin-top:34px;
+  }
+  .socials a{
+    width:38px; height:38px;
+    border:1px solid var(--border);
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  .socials a:hover{ border-color:var(--ink-muted); background:var(--bg); }
+  .socials svg{ width:17px; height:17px; }
+
+  footer{
+    padding:32px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12.5px;
+    color:var(--ink-muted);
+    font-family:var(--mono);
+  }
+  footer a{ text-decoration:none; }
+  footer a:hover{ color:var(--ink); }
+  @media (max-width:520px){
+    footer{ flex-direction:column; gap:10px; text-align:center; }
+  }
+</style>
+</head>
+<body>
+
+<div id="hud">X:<span id="hx">000</span> Y:<span id="hy">000</span><br><span id="fps">60</span> FPS</div>
+
+<nav>
+  <div class="wrap nav-inner">
+    <div class="logo"><span class="status-dot"></span>SWAROOP KRISHNA</div>
+    <div class="nav-links">
+      <a href="#projects">Projects</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <div class="nav-status">AVAILABLE</div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">GAME DEVELOPER — BUILD 2026.07</span>
+    <h1 class="name">Swaroop Krishna</h1>
+    <p class="tagline">I design and build games that feel good to play — from core mechanics and combat feel to the small details players never notice, but always feel.</p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn btn-primary">View Projects</a>
+      <a href="#contact" class="btn btn-ghost">Get in Touch</a>
+    </div>
+  </div>
+</header>
+
+<section id="projects" class="section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div>
+        <span class="section-eyebrow">SELECTED BUILDS</span>
+        <h2 class="section-title">Projects</h2>
+      </div>
+      <p class="section-sub">A mix of shipped titles, in-progress work, and prototypes. Swap these placeholders with your own builds.</p>
+    </div>
+
+    <div class="grid-projects">
+
+      <div class="card reveal">
+        <div class="thumb"><span>Add screenshot — 16:9</span></div>
+        <div class="card-body">
+          <div class="card-top">
+            <h3 class="card-title">Project Name One</h3>
+            <span class="badge shipped">Shipped</span>
+          </div>
+          <p class="card-desc">One-line summary of the game, the core loop, and what made it worth building.</p>
+          <div class="tags">
+            <span class="tag">Unity</span>
+            <span class="tag">C#</span>
+            <span class="tag">PC</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <div class="thumb"><span>Add screenshot — 16:9</span></div>
+        <div class="card-body">
+          <div class="card-top">
+            <h3 class="card-title">Project Name Two</h3>
+            <span class="badge dev">In Development</span>
+          </div>
+          <p class="card-desc">One-line summary of the game, the core loop, and what made it worth building.</p>
+          <div class="tags">
+            <span class="tag">Godot</span>
+            <span class="tag">GDScript</span>
+            <span class="tag">Mobile</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <div class="thumb"><span>Add screenshot — 16:9</span></div>
+        <div class="card-body">
+          <div class="card-top">
+            <h3 class="card-title">Project Name Three</h3>
+            <span class="badge proto">Prototype</span>
+          </div>
+          <p class="card-desc">One-line summary of the game, the core loop, and what made it worth building.</p>
+          <div class="tags">
+            <span class="tag">Unreal</span>
+            <span class="tag">Blueprints</span>
+            <span class="tag">Game Jam</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <div class="thumb"><span>Add screenshot — 16:9</span></div>
+        <div class="card-body">
+          <div class="card-top">
+            <h3 class="card-title">Project Name Four</h3>
+            <span class="badge shipped">Shipped</span>
+          </div>
+          <p class="card-desc">One-line summary of the game, the core loop, and what made it worth building.</p>
+          <div class="tags">
+            <span class="tag">Unity</span>
+            <span class="tag">Multiplayer</span>
+            <span class="tag">Console</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="about" class="section">
+  <div class="wrap">
+    <div class="avatar reveal"><span>Add photo</span></div>
+    <div class="reveal">
+      <span class="section-eyebrow">PLAYER PROFILE</span>
+      <h2 class="section-title" style="margin-bottom:22px;">About</h2>
+      <div class="bio">
+        <p>Write a short introduction here — how you got into game development, what kinds of games you like to make, and what you're focused on right now.</p>
+        <p class="muted">A second paragraph works well for specifics: years of experience, notable roles, or the type of teams you enjoy working with.</p>
+      </div>
+
+      <div class="loadout">
+        <div class="loadout-group">
+          <span class="loadout-label">ENGINES</span>
+          <div class="chip-row">
+            <span class="chip">Unity</span>
+            <span class="chip">Unreal Engine</span>
+            <span class="chip">Godot</span>
+          </div>
+        </div>
+        <div class="loadout-group">
+          <span class="loadout-label">LANGUAGES</span>
+          <div class="chip-row">
+            <span class="chip">C#</span>
+            <span class="chip">C++</span>
+            <span class="chip">GDScript</span>
+            <span class="chip">Python</span>
+          </div>
+        </div>
+        <div class="loadout-group">
+          <span class="loadout-label">TOOLS</span>
+          <div class="chip-row">
+            <span class="chip">Blender</span>
+            <span class="chip">Git</span>
+            <span class="chip">Perforce</span>
+            <span class="chip">Jira</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="section">
+  <div class="wrap">
+    <div class="inner reveal">
+      <span class="section-eyebrow">CO-OP MODE</span>
+      <h2 class="section-title">Let's build something</h2>
+      <p class="section-sub" style="max-width:480px; margin-top:14px;">Open to new projects, collaborations, and full-time roles. Reach out and I'll get back to you.</p>
+      <a href="mailto:hello@swaroopkrishna.dev" class="btn btn-primary">Say hello — hello@swaroopkrishna.dev</a>
+
+      <div class="socials">
+        <a href="#" aria-label="GitHub" title="GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.4c0-1 .3-1.6 1-2.2-3.3-.4-6.7-1.6-6.7-7.3 0-1.6.6-2.9 1.5-4-.2-.4-.6-1.8.2-3.8 0 0 1.3-.4 4 1.6a13.5 13.5 0 0 1 7.3 0c2.7-2 4-1.6 4-1.6.8 2 .4 3.4.2 3.8.9 1.1 1.5 2.4 1.5 4 0 5.7-3.4 6.9-6.7 7.3.5.5 1 1.4 1 2.8V19"/></svg>
+        </a>
+        <a href="#" aria-label="itch.io" title="itch.io">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l2-4h14l2 4M8 12v3M16 12v3"/></svg>
+        </a>
+        <a href="#" aria-label="LinkedIn" title="LinkedIn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 10v7M7 7v.01M12 17v-4.5a2.5 2.5 0 0 1 5 0V17M12 10v7"/></svg>
+        </a>
+        <a href="#" aria-label="X / Twitter" title="X / Twitter">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <span>© 2026 Swaroop Krishna</span>
+  <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
+</footer>
+
+<script>
+  // Reveal on scroll
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  revealEls.forEach(el => io.observe(el));
+
+  // HUD: cursor coordinates
+  const hx = document.getElementById('hx');
+  const hy = document.getElementById('hy');
+  window.addEventListener('mousemove', (e) => {
+    hx.textContent = String(e.clientX).padStart(3,'0');
+    hy.textContent = String(e.clientY).padStart(3,'0');
+  });
+
+  // HUD: fps counter (real rAF-based)
+  const fpsEl = document.getElementById('fps');
+  let last = performance.now();
+  let frames = 0;
+  let acc = 0;
+  function tick(now){
+    const dt = now - last;
+    last = now;
+    acc += dt;
+    frames++;
+    if (acc >= 500) {
+      const fps = Math.round((frames * 1000) / acc);
+      fpsEl.textContent = Math.min(fps, 60);
+      frames = 0;
+      acc = 0;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+</script>
+
+</body>
+</html>
